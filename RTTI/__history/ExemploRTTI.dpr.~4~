@@ -1,0 +1,13 @@
+program ExemploRTTI;
+
+uses
+  Vcl.Forms,
+  SerializacaoRTTI in 'SerializacaoRTTI.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.Run;
+end.

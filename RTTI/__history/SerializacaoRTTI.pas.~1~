@@ -1,0 +1,72 @@
+unit SerializacaoRTTI;
+
+interface
+
+uses
+  System.Rtti, System.JSON, System.SysUtils, System.Classes;
+
+type
+  TSerializationUtils = class
+  public
+    class function SerializeObjectToJSON(Obj: TObject): TJSONValue;
+    class function DeserializeJSONToObject(JSONValue: TJSONValue; ObjClass: TClass): TObject;
+  end;
+
+implementation
+
+class function TSerializationUtils.SerializeObjectToJSON(Obj: TObject): TJSONValue;
+var
+  Ctx: TRttiContext;
+  ObjType: TRttiType;
+  Prop: TRttiProperty;
+  JSONObj: TJSONObject;
+begin
+  Ctx := TRttiContext.Create;
+  try
+    ObjType := Ctx.GetType(Obj.ClassType);
+    JSONObj := TJSONObject.Create;
+    for Prop in ObjType.GetProperties do
+    begin
+      JSONObj.AddPair(Prop.Name, Prop.GetValue(Obj).ToString);
+    end;
+    Result := JSONObj;
+  finally
+    Ctx.Free;
+  end;
+end;
+
+class function TSerializationUtils.DeserializeJSONToObject(JSONValue: TJSONValue; ObjClass: TClass): TObject;
+var
+  Ctx: TRttiContext;
+  ObjType: TRttiType;
+  Prop: TRttiProperty;
+  JSONObj: TJSONObject;
+  Obj: TObject;
+begin
+  Ctx := TRttiContext.Create;
+  try
+    ObjType := Ctx.GetType(ObjClass);
+    if JSONValue is TJSONObject then
+    begin
+      JSONObj := TJSONObject(JSONValue);
+      Obj := ObjClass.Create;
+      for Prop in ObjType.GetProperties do
+      begin
+        if JSONObj.TryGetValue<string>(Prop.Name, Result) then
+        begin
+          Prop.SetValue(Obj, StrToVar(Result)); // Convert string to property type
+        end;
+      end;
+      Result := Obj;
+    end
+    else
+    begin
+      Result := nil; // Invalid JSON format
+    end;
+  finally
+    Ctx.Free;
+  end;
+end;
+
+end.
+
